@@ -7,7 +7,53 @@
 #define DIR1 5
 #define DIR2 6
 
+//----ROS SETUP --------------
 
+#include <ros.h>
+#include <ArduinoHardware.h>
+#include <std_msgs/Float32.h>
+#include <geometry_msgs/Pose2D.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/UInt8MultiArray.h>
+
+ros::NodeHandle  nh;
+
+//publishers
+std_msgs::Float32 distance_msg;
+ros::Publisher frontDistPub("front_distance", &distance_msg);
+ros::Publisher rightDistPub("right_distance", &distance_msg);
+ros::Publisher leftDistPub("left_distance", &distance_msg);
+
+geometry_msgs::Pose2D pose_msg;
+ros::Publisher posePub("pose", &pose_msg);
+
+//subscribers
+
+void ledsCallback(const std_msgs::UInt8MultiArray msg) {
+  //TODO
+}
+void cmdVelCallback(const geometry_msgs::Twist msg) {
+  //TODO
+}
+void setPoseCallback(const geometry_msgs::Pose2D msg) {
+  //TODO
+}
+
+ros::Subscriber<std_msgs::UInt8MultiArray> ledsSub("rgb_leds", ledsCallback );
+ros::Subscriber<geometry_msgs::Twist> cmdSub("cmd_vel", cmdVelCallback );
+ros::Subscriber<geometry_msgs::Pose2D> poseSub("set_pose", setPoseCallback );
+
+void ros_setup() {
+  nh.initNode();
+  nh.advertise(frontDistPub);
+  nh.advertise(rightDistPub);
+  nh.advertise(leftDistPub);
+  nh.advertise(posePub);
+
+  nh.subscribe(ledsSub);
+  nh.subscribe(cmdSub);
+  nh.subscribe(poseSub);
+}
 
 //-----KINEMATIC SETUP--------
 Robot robot;
