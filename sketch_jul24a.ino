@@ -55,7 +55,9 @@ ros::Subscriber<geometry_msgs::Twist> cmdSub("cmd_vel", cmdVelCallback );
 ros::Subscriber<geometry_msgs::Pose2D> poseSub("set_pose", setPoseCallback );
 
 void ros_setup() {
+  nh.getHardware()->setBaud(115200);
   nh.initNode();
+  
   nh.advertise(frontDistPub);
   nh.advertise(rightDistPub);
   nh.advertise(leftDistPub);
@@ -76,7 +78,8 @@ void ROSLoop() { //called in loop()
   unsigned long timeT = millis();
   if(timeT-lastROSUpdateTime < DELTA_ROS)
     return;
-      
+
+  lastROSUpdateTime= timeT;
   distance_msg.data = robot.front_distance;
   frontDistPub.publish( &distance_msg );
   distance_msg.data = robot.right_distance;
@@ -172,6 +175,8 @@ void PID_loop() { //called in UpdateLoop
 void setup() {
   kinematic_setup();
   PID_setup();
+  ros_setup();
+  
   // put your setup code here, to run once:
   pinMode(PWM1, OUTPUT); //motor PWM control
   pinMode(PWM2, OUTPUT); //motor PWM control
@@ -181,13 +186,10 @@ void setup() {
   analogWrite(PWM2, 0);
   digitalWrite(DIR1, LOW);
   digitalWrite(DIR2, LOW);
-
-  Serial.begin(115200);
 }
 
 void loop() {
   ROSLoop();
   updateLoop();
   printLoop();
-
 }
