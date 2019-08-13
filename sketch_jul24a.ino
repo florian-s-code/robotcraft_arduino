@@ -1,6 +1,7 @@
 #include <Encoder.h>
 #include <PID_v1.h>
 #include "kinematic.h"
+#include "IR_sensor.h"
 
 #include <ros.h>
 #include <ArduinoHardware.h>
@@ -76,11 +77,11 @@ void ROSLoop() { //called in loop()
   if(timeT-lastROSUpdateTime < DELTA_ROS)
     return;
       
-  distance_msg.data = 0; //TODO
+  distance_msg.data = robot.front_distance;
   frontDistPub.publish( &distance_msg );
-  distance_msg.data = 0; //TODO
+  distance_msg.data = robot.right_distance;
   rightDistPub.publish( &distance_msg );
-  distance_msg.data = 0; //TODO
+  distance_msg.data = robot.left_distance;
   leftDistPub.publish( &distance_msg );
 
   pose_msg.x = robot.x;
@@ -119,6 +120,11 @@ void updateLoop() {
 
     PID_loop();
   }
+
+  //IR Sensors
+  robot.front_distance = sensF();
+  robot.left_distance = sensL();
+  robot.right_distance = sensR();
 }
 
 unsigned long lastPrintTime=0;

@@ -3,6 +3,7 @@
 typedef struct {
   float x, y, t; //cartesian coordinates and angle/x
   long Nr, Nl; //encoder pulses for right and left
+  float front_distance, right_distance, left_distance; //distance given by IR sensors
 } Robot;
 
 void cmd_vel2wheels(float V, float W, double wheel_vel[2]);
