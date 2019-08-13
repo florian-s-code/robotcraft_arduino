@@ -1,3 +1,3 @@
-double sensL();
-double sensF();
-double sensR();
+float sensL();
+float sensF();
+float sensR();

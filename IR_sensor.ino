@@ -25,24 +25,24 @@ float polynom_front[DEGREE+1] = {864.048077,
 /* Convert the analog value from the IR to a value in cm using
  * a polynomial approximation
  */
-double convert(int sensor_value, float polynom[DEGREE+1])
+float convert(int sensor_value, float polynom[DEGREE+1])
 {
-  double result = polynom[0];
+  float result = polynom[0];
   for(int i = 1; i < DEGREE+1; i++) {
     result += polynom[i]*pow(sensor_value, i);
   }
   return result;
 }
 
-double sensL(){
+float sensL(){
   int sensor_left = analogRead(adc2) ; 
   return convert(sensor_left, polynom_left);
 }
-double sensF(){
+float sensF(){
   int sensor_front = analogRead(adc3) ; 
   return convert(sensor_front, polynom_front);
 }
-double sensR(){
+float sensR(){
   int sensor_right = analogRead(adc4) ; 
   return convert(sensor_right, polynom_right);
 }
