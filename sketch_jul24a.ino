@@ -2,19 +2,29 @@
 #include <PID_v1.h>
 #include "kinematic.h"
 
-#define PWM1 4
-#define PWM2 9
-#define DIR1 5
-#define DIR2 6
-
-//----ROS SETUP --------------
-
 #include <ros.h>
 #include <ArduinoHardware.h>
 #include <std_msgs/Float32.h>
 #include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/UInt8MultiArray.h>
+
+#define PWM1 4
+#define PWM2 9
+#define DIR1 5
+#define DIR2 6
+
+//-----KINEMATIC SETUP--------
+Robot robot;
+float cmd_vel[2] = {0, 0}; //v and w command (constant for now)
+double cmd_wheel_vel[2] = {0, 0};
+double real_wheel_vel[2] = {0, 0};
+
+void kinematic_setup() {
+  robot.x = robot.y =robot.t = robot.Nr = robot.Nl = 0;
+}
+
+//----ROS SETUP --------------
 
 ros::NodeHandle  nh;
 
@@ -55,15 +65,33 @@ void ros_setup() {
   nh.subscribe(poseSub);
 }
 
-//-----KINEMATIC SETUP--------
-Robot robot;
-float cmd_vel[2] = {0, 0}; //v and w command (constant for now)
-double cmd_wheel_vel[2] = {0, 0};
-double real_wheel_vel[2] = {0, 0};
+// ----- ROS LOOP -----------
 
-void kinematic_setup() {
-  robot.x = robot.y =robot.t = robot.Nr = robot.Nl = 0;
+unsigned long lastROSUpdateTime=0;
+const int DELTA_ROS = 10;
+
+void ROS_loop() { //called in loop()
+  
+  unsigned long timeT = millis();
+  if(timeT-lastROSUpdateTime < DELTA_ROS)
+    return;
+      
+  distance_msg.data = 0; //TODO
+  frontDistPub.publish( &distance_msg );
+  distance_msg.data = 0; //TODO
+  rightDistPub.publish( &distance_msg );
+  distance_msg.data = 0; //TODO
+  leftDistPub.publish( &distance_msg );
+
+  pose_msg.x = robot.x;
+  pose_msg.y  = robot.y;
+  pose_msg.theta = robot.t;
+  posePub.publish( &pose_msg );
+  
+  nh.spinOnce();
+  
 }
+
 //-----ENCODER SETUP--------
 Encoder encL(2,3);
 Encoder encR(19,18);
