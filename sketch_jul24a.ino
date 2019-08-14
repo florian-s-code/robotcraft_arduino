@@ -1,7 +1,10 @@
+#include <stdint.h>
+
 #include <Encoder.h>
 #include <PID_v1.h>
 #include "kinematic.h"
 #include "IR_sensor.h"
+#include "LED.h"
 
 #include <ros.h>
 #include <ArduinoHardware.h>
@@ -41,13 +44,17 @@ ros::Publisher posePub("pose", &pose_msg);
 //subscribers
 
 void ledsCallback(const std_msgs::UInt8MultiArray msg) {
-  //TODO
+  uint8_t * data = (uint8_t *)msg.data;
+  setColor(data);
 }
 void cmdVelCallback(const geometry_msgs::Twist msg) {
-  //TODO
+  cmd_vel[0] = msg.linear.x; //only the x is interesting because the robot goes in only 1 direction
+  cmd_vel[1] = msg.linear.z; //only z because the robot rotate only around this axis
 }
 void setPoseCallback(const geometry_msgs::Pose2D msg) {
-  //TODO
+  robot.x = msg.x;
+  robot.y = msg.y;
+  robot.t= msg.theta;
 }
 
 ros::Subscriber<std_msgs::UInt8MultiArray> ledsSub("rgb_leds", ledsCallback );
@@ -176,6 +183,7 @@ void setup() {
   kinematic_setup();
   PID_setup();
   ros_setup();
+  LED_setup();
   
   // put your setup code here, to run once:
   pinMode(PWM1, OUTPUT); //motor PWM control
