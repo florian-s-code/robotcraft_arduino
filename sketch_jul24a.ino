@@ -78,7 +78,7 @@ void ros_setup() {
 // ----- ROS LOOP -----------
 
 unsigned long lastROSUpdateTime=0;
-const int DELTA_ROS = 10;
+const int DELTA_ROS = 100; //ms
 
 void ROSLoop() { //called in loop()
   
