@@ -20,7 +20,7 @@
 
 //-----KINEMATIC SETUP--------
 Robot robot;
-float cmd_vel[2] = {0, 0}; //v and w command (constant for now)
+float cmd_vel[2] = {0.0, 0.0}; //treated velocity (mostly absolute)
 double cmd_wheel_vel[2] = {0, 0};
 double real_wheel_vel[2] = {0, 0};
 
@@ -49,7 +49,7 @@ void ledsCallback(const std_msgs::UInt8MultiArray msg) {
 }
 void cmdVelCallback(const geometry_msgs::Twist msg) {
   cmd_vel[0] = msg.linear.x; //only the x is interesting because the robot goes in only 1 direction
-  cmd_vel[1] = msg.linear.z; //only z because the robot rotate only around this axis
+  cmd_vel[1] = msg.angular.z; //only z because the robot rotate only around this axis
 }
 void setPoseCallback(const geometry_msgs::Pose2D msg) {
   robot.x = msg.x;
@@ -116,6 +116,8 @@ PID pidL(&real_wheel_vel[1], &outputL, &cmd_wheel_vel[1], 300, 25000, 0, DIRECT)
 void PID_setup() {
   pidR.SetMode(AUTOMATIC);
   pidL.SetMode(AUTOMATIC);
+  pidR.SetOutputLimits(-1000, +1000);
+  pidL.SetOutputLimits(-1000, +1000);
 }
 
 //-----UPDATE LOOP --------
@@ -157,26 +159,34 @@ void PID_loop() { //called in UpdateLoop
   pidR.Compute();
   pidL.Compute();
 
+  Serial.print("OutputR : ");
+  Serial.println(outputR);
+  Serial.print("OutputL : ");
+  Serial.println(outputL);
+
+  double absOutputR = outputR;
+  double absOutputL = outputL;
+
   //Inverse motor direction if ouptut negative and make it positive
-  if(outputR < 0) {
+  if(absOutputR <= 0) {
     digitalWrite(DIR1, HIGH);
-    outputR = -outputR;
+    absOutputR = -absOutputR;
   } else {
     digitalWrite(DIR1, LOW);
   }
-  if(outputL < 0) {
+  if(absOutputL <= 0) {
     digitalWrite(DIR2, HIGH);
-    outputL = -outputL;
+    absOutputL = -absOutputL;
   } else {
     digitalWrite(DIR2, LOW);
   }
   
   //Ensures output in correct range
-  outputR = min(outputR, 255);
-  outputL = min(outputL, 255);
+  absOutputR = min(absOutputR, 255);
+  absOutputL = min(absOutputL, 255);
   
-  analogWrite(PWM1, (int)outputR);
-  analogWrite(PWM2, (int)outputL);
+  analogWrite(PWM1, (int)absOutputR);
+  analogWrite(PWM2, (int)absOutputL);
 }
 
 void setup() {
@@ -200,4 +210,5 @@ void loop() {
   ROSLoop();
   updateLoop();
   printLoop();
+  //delay(100);
 }
