@@ -46,6 +46,7 @@ void PID_setup() {
 ros::NodeHandle  nh;
 
 const unsigned int cmdTimeout = 3000; //Time to wait for a cmd_vel message before stopping the robot
+bool hasTimedOut = false;
 
 //publishers
 std_msgs::Float32 distance_msg;
@@ -137,11 +138,20 @@ void ROSLoop() { //called in loop()
 
   //check command timeout
   checkCommandTimeout();
+
 }
 
 void checkCommandTimeout() {
-  if( millis() - lastCmdTime > cmdTimeout) {
+  if( (hasTimedOut == false) && (millis() - lastCmdTime > cmdTimeout) ) {
     stopAndResetPID();
+    pidR.SetMode(MANUAL);
+    pidL.SetMode(MANUAL);
+    hasTimedOut = true;
+  }
+  else if( (hasTimedOut == true) && (millis() - lastCmdTime < cmdTimeout) ) {
+    pidR.SetMode(AUTOMATIC);
+    pidL.SetMode(AUTOMATIC);
+    hasTimedOut = false;
   }
 }
 
@@ -184,7 +194,7 @@ void printLoop() {
 void PID_loop() { //called in UpdateLoop
   //recalculate desired wheel velocities using desired v and w velocities
   cmd_vel2wheels(cmd_vel[0], cmd_vel[1], cmd_wheel_vel);
-  
+
   pidR.Compute();
   pidL.Compute();
 
