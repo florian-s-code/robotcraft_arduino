@@ -37,8 +37,8 @@ PID pidL(&real_wheel_vel[1], &outputL, &cmd_wheel_vel[1], 300, 25000, 0, DIRECT)
 void PID_setup() {
   pidR.SetMode(AUTOMATIC);
   pidL.SetMode(AUTOMATIC);
-  pidR.SetOutputLimits(-255, +255);
-  pidL.SetOutputLimits(-255, +255);
+  pidR.SetOutputLimits(-200, +200);
+  pidL.SetOutputLimits(-200, +200);
 }
 
 //----ROS SETUP --------------
@@ -62,7 +62,7 @@ void ledsCallback(const std_msgs::UInt8MultiArray msg) {
   uint8_t * data = (uint8_t *)msg.data;
   setColor(data);
 }
-unsigned int lastCmdTime; //last time we received a command
+unsigned long lastCmdTime; //last time we received a command
 void cmdVelCallback(const geometry_msgs::Twist msg) {
   lastCmdTime = millis();
   cmd_vel[0] = msg.linear.x; //only the x is interesting because the robot goes in only 1 direction
@@ -71,7 +71,7 @@ void cmdVelCallback(const geometry_msgs::Twist msg) {
 void setPoseCallback(const geometry_msgs::Pose2D msg) {
   robot.x = msg.x;
   robot.y = msg.y;
-  robot.t= msg.theta;
+  robot.t = msg.theta;
 }
 /* Stop the robot and reset PID errors */
 void stopAndResetPID() {
