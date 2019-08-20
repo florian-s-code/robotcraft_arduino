@@ -9,6 +9,7 @@
 #include <ros.h>
 #include <ArduinoHardware.h>
 #include <std_msgs/Float32.h>
+#include <std_msgs/Empty.h>
 #include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/UInt8MultiArray.h>
@@ -27,10 +28,24 @@ double real_wheel_vel[2] = {0, 0};
 void kinematic_setup() {
   robot.x = robot.y =robot.t = robot.Nr = robot.Nl = 0;
 }
+// ---- PID SETUP ---------
+double outputR;
+double outputL;
+PID pidR(&real_wheel_vel[0], &outputR, &cmd_wheel_vel[0], 300, 25000, 0, DIRECT);
+PID pidL(&real_wheel_vel[1], &outputL, &cmd_wheel_vel[1], 300, 25000, 0, DIRECT);
+
+void PID_setup() {
+  pidR.SetMode(AUTOMATIC);
+  pidL.SetMode(AUTOMATIC);
+  pidR.SetOutputLimits(-255, +255);
+  pidL.SetOutputLimits(-255, +255);
+}
 
 //----ROS SETUP --------------
 
 ros::NodeHandle  nh;
+
+const unsigned int cmdTimeout = 3000; //Time to wait for a cmd_vel message before stopping the robot
 
 //publishers
 std_msgs::Float32 distance_msg;
@@ -47,7 +62,9 @@ void ledsCallback(const std_msgs::UInt8MultiArray msg) {
   uint8_t * data = (uint8_t *)msg.data;
   setColor(data);
 }
+unsigned int lastCmdTime; //last time we received a command
 void cmdVelCallback(const geometry_msgs::Twist msg) {
+  lastCmdTime = millis();
   cmd_vel[0] = msg.linear.x; //only the x is interesting because the robot goes in only 1 direction
   cmd_vel[1] = msg.angular.z; //only z because the robot rotate only around this axis
 }
@@ -56,10 +73,24 @@ void setPoseCallback(const geometry_msgs::Pose2D msg) {
   robot.y = msg.y;
   robot.t= msg.theta;
 }
+/* Stop the robot and reset PID errors */
+void stopAndResetPID() {
+  pidR.SetMode(MANUAL);
+  pidL.SetMode(MANUAL);
+  outputR = outputL = 0;
+  cmd_vel[0] = cmd_vel[1] = 0;
+  pidR.SetMode(AUTOMATIC);
+  pidL.SetMode(AUTOMATIC);
+}
+void stopAndResetCallback( const std_msgs::Empty& msg ) {
+  stopAndResetPID();
+}
 
 ros::Subscriber<std_msgs::UInt8MultiArray> ledsSub("rgb_leds", ledsCallback );
 ros::Subscriber<geometry_msgs::Twist> cmdSub("cmd_vel", cmdVelCallback );
 ros::Subscriber<geometry_msgs::Pose2D> poseSub("set_pose", setPoseCallback );
+ros::Subscriber<std_msgs::Empty> stopAndResetSub("stop_reset", stopAndResetCallback );
+
 
 void ros_setup() {
   nh.getHardware()->setBaud(115200);
@@ -73,12 +104,15 @@ void ros_setup() {
   nh.subscribe(ledsSub);
   nh.subscribe(cmdSub);
   nh.subscribe(poseSub);
+  nh.subscribe(stopAndResetSub);
 }
 
 // ----- ROS LOOP -----------
 
 unsigned long lastROSUpdateTime=0;
 const int DELTA_ROS = 100; //ms
+
+void checkCommandTimeout();
 
 void ROSLoop() { //called in loop()
   
@@ -98,27 +132,22 @@ void ROSLoop() { //called in loop()
   pose_msg.y  = robot.y;
   pose_msg.theta = robot.t;
   posePub.publish( &pose_msg );
-  
+ 
   nh.spinOnce();
-  
+
+  //check command timeout
+  checkCommandTimeout();
+}
+
+void checkCommandTimeout() {
+  if( millis() - lastCmdTime > cmdTimeout) {
+    stopAndResetPID();
+  }
 }
 
 //-----ENCODER SETUP--------
 Encoder encL(2,3);
 Encoder encR(19,18);
-
-// ---- PID SETUP ---------
-double outputR;
-double outputL;
-PID pidR(&real_wheel_vel[0], &outputR, &cmd_wheel_vel[0], 300, 25000, 0, DIRECT);
-PID pidL(&real_wheel_vel[1], &outputL, &cmd_wheel_vel[1], 300, 25000, 0, DIRECT);
-
-void PID_setup() {
-  pidR.SetMode(AUTOMATIC);
-  pidL.SetMode(AUTOMATIC);
-  pidR.SetOutputLimits(-1000, +1000);
-  pidL.SetOutputLimits(-1000, +1000);
-}
 
 //-----UPDATE LOOP --------
 
@@ -209,6 +238,6 @@ void setup() {
 void loop() {
   ROSLoop();
   updateLoop();
-  printLoop();
+  //printLoop();
   //delay(100);
 }
