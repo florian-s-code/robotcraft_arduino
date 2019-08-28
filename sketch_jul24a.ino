@@ -31,8 +31,9 @@ void kinematic_setup() {
 // ---- PID SETUP ---------
 double outputR;
 double outputL;
-PID pidR(&real_wheel_vel[0], &outputR, &cmd_wheel_vel[0], 300, 25000, 0, DIRECT);
-PID pidL(&real_wheel_vel[1], &outputL, &cmd_wheel_vel[1], 300, 25000, 0, DIRECT);
+//PID pidR(&real_wheel_vel[0], &outputR, &cmd_wheel_vel[0], 06*0.7, 3.36, 0,013125, DIRECT);
+PID pidR(&real_wheel_vel[0], &outputR, &cmd_wheel_vel[0], 300*0.05, 2500*0.05, 0, DIRECT);
+PID pidL(&real_wheel_vel[1], &outputL, &cmd_wheel_vel[1], 300*0.05, 2500*0.05, 0, DIRECT);
 
 void PID_setup() {
   pidR.SetMode(AUTOMATIC);
@@ -184,9 +185,9 @@ void printLoop() {
   unsigned long timeT = millis();
   if(timeT-lastPrintTime > 10) {
     lastPrintTime = timeT;
-    //Serial.print(real_wheel_vel[0]*10);
+    //Serial.print(real_wheel_vel[0]);
     //Serial.print(" ");
-    //Serial.println(cmd_wheel_vel[0]*10);
+    //Serial.println(cmd_wheel_vel[0]);
     //Serial.println(cmd_vel[0]);
   }
 }
@@ -198,10 +199,10 @@ void PID_loop() { //called in UpdateLoop
   pidR.Compute();
   pidL.Compute();
 
-  Serial.print("OutputR : ");
+  /*Serial.print("OutputR : ");
   Serial.println(outputR);
   Serial.print("OutputL : ");
-  Serial.println(outputL);
+  Serial.println(outputL);*/
 
   double absOutputR = outputR;
   double absOutputL = outputL;

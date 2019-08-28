@@ -45,13 +45,13 @@ void posUpdate(Robot* robot, Encoder encR, Encoder encL, double wheel_vel[2]) {
   robot->Nr = Nr;
   robot->Nl = Nl;
   //calculate real linear and angular velocities with pulse count diff  
-  float v = (2.0*M_PI*r/C) * ((float)(diffNr+diffNl)/2.0);
-  float w = (2.0*M_PI*r/C) * ((float)(diffNr-diffNl)/b);
+  float v = (2.0*M_PI*r/C) * ((float)(diffNr+diffNl)/2.0) / (DELTA_T/1000);
+  float w = (2.0*M_PI*r/C) * ((float)(diffNr-diffNl)/b) / (DELTA_T/1000);
 
   //update position
-  robot->t = atan2(sin(robot->t+w), cos(robot->t+w));
-  robot->x += v*cos(robot->t);
-  robot->y += v*sin(robot->t);
+  robot->t = atan2(sin(robot->t+w * (DELTA_T/1000)), cos(robot->t+w * (DELTA_T/1000)));
+  robot->x += v*cos(robot->t) * (DELTA_T/1000);
+  robot->y += v*sin(robot->t) * (DELTA_T/1000);
 
   //update wheel velocities
   cmd_vel2wheels(v, w, wheel_vel);
