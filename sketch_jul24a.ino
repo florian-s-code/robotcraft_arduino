@@ -14,10 +14,11 @@
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/UInt8MultiArray.h>
 
-#define PWM1 4
-#define PWM2 9
-#define DIR1 5
-#define DIR2 6
+
+#define PWM1 9
+#define PWM2 4
+#define DIR1 6
+#define DIR2 5
 
 //-----KINEMATIC SETUP--------
 Robot robot;
@@ -157,8 +158,9 @@ void checkCommandTimeout() {
 }
 
 //-----ENCODER SETUP--------
-Encoder encL(2,3);
-Encoder encR(19,18);
+
+Encoder encR(2,3);
+Encoder encL(19,18);
 
 //-----UPDATE LOOP --------
 
